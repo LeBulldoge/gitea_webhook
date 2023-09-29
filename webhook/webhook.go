@@ -7,7 +7,17 @@ import (
 	"github.com/LeBulldoge/gitea_webhook/git"
 )
 
-func Handle(w http.ResponseWriter, r *http.Request) {
+type WebhookHandler struct {
+	git *git.Git
+}
+
+func NewHandler(gt *git.Git) WebhookHandler {
+	return WebhookHandler{
+		git: gt,
+	}
+}
+
+func (m *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		slog.Error("request type should be post")
 		w.WriteHeader(http.StatusBadRequest)
@@ -20,7 +30,7 @@ func Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := git.Pull()
+	err := m.git.Pull()
 	if err != nil {
 		slog.Error("failed running git", "err", err)
 		w.WriteHeader(http.StatusInternalServerError)

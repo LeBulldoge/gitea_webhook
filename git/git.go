@@ -2,7 +2,6 @@ package git
 
 import (
 	"errors"
-	"flag"
 	"fmt"
 	"log/slog"
 
@@ -10,16 +9,35 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 )
 
-var (
-	repoDir    = flag.String("repo", "", "Target repo directory")
-	pemKey     = flag.String("pem", "", "Path to pem key for ssh auth")
-	passphrase = flag.String("pass", "", "Passphrase for private key")
-)
+type Git struct {
+	repoDir    string
+	pemKey     string
+	passphrase string
 
-func Pull() error {
+	repo *git.Repository
+}
+
+func New(repoDir string, pemKey string, passphrase string) (*Git, error) {
+	res := &Git{
+		repoDir:    repoDir,
+		pemKey:     pemKey,
+		passphrase: passphrase,
+	}
+
+	repo, err := git.PlainOpen(repoDir)
+	if err != nil {
+		return nil, fmt.Errorf("error opening git repo: %w", err)
+	}
+
+	res.repo = repo
+
+	return res, nil
+}
+
+func (m *Git) Pull() error {
 	slog.Info("performing git pull")
 
-	repo, err := git.PlainOpen(*repoDir)
+	repo, err := git.PlainOpen(m.repoDir)
 	if err != nil {
 		return fmt.Errorf("error opening git repo: %w", err)
 	}
@@ -33,8 +51,8 @@ func Pull() error {
 		RemoteName: "origin",
 	}
 
-	if *pemKey != "" {
-		keys, err := ssh.NewPublicKeysFromFile("git", *pemKey, *passphrase)
+	if m.pemKey != "" {
+		keys, err := ssh.NewPublicKeysFromFile("git", m.pemKey, m.passphrase)
 		if err != nil {
 			return fmt.Errorf("error creating public keys: %w", err)
 		}
