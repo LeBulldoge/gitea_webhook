@@ -37,12 +37,7 @@ func New(repoDir string, pemKey string, passphrase string) (*Git, error) {
 func (m *Git) Pull() error {
 	slog.Info("performing git pull")
 
-	repo, err := git.PlainOpen(m.repoDir)
-	if err != nil {
-		return fmt.Errorf("error opening git repo: %w", err)
-	}
-
-	wt, err := repo.Worktree()
+	wt, err := m.repo.Worktree()
 	if err != nil {
 		return fmt.Errorf("error getting git worktree: %w", err)
 	}
@@ -67,12 +62,12 @@ func (m *Git) Pull() error {
 		return fmt.Errorf("error doing git pull: %w", err)
 	}
 
-	ref, err := repo.Head()
+	ref, err := m.repo.Head()
 	if err != nil {
 		return fmt.Errorf("error getting git head ref: %w", err)
 	}
 
-	commit, err := repo.CommitObject(ref.Hash())
+	commit, err := m.repo.CommitObject(ref.Hash())
 	if err != nil {
 		return fmt.Errorf("error getting commit from ref: %w", err)
 	}
